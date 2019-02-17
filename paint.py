@@ -31,6 +31,20 @@ def Expand(clues, configs, length):
         r[block + offset] = True
     yield r
 
+def Print(truth):
+  print('\x1b[2J')
+  print('⎯⎯' * len(truth))
+  for r in range(len(truth)):
+    for c in range(len(truth[r])):
+      if truth_values[r][c] == True:
+        print('██', end='')
+      elif truth_values[r][c] == None:
+        print('▒▒', end='')
+      else:
+        print('  ', end='')
+    print()
+  print('⎯⎯' * len(truth))
+
 work_rows = [
     list(Expand(row_clues, Legals(row_clues, 0, len(rows)), len(rows)))
     for row_clues in rows
@@ -42,8 +56,10 @@ work_cols = [
 
 truth_values = [[None] * len(columns) for _ in range(len(rows))]
 old_truth = None
+intermediate_truth = None
 while True:
   old_truth = copy.deepcopy(truth_values)
+  intermediate_truth = copy.deepcopy(truth_values)
   for r, wr in enumerate(work_rows):
     # Filter rows that conflict with truth values.
     for c, truth in enumerate(truth_values[r]):
@@ -57,6 +73,10 @@ while True:
       distincts = list(set(cand[c] for cand in wr))
       if len(distincts) == 1 and distincts[0] is not None:
         truth_values[r][c] = distincts[0]
+    if truth_values != intermediate_truth:
+      intermediate_truth = copy.deepcopy(truth_values)
+      Print(truth_values)
+      time.sleep(.18)
 
   for c, wc in enumerate(work_cols):
     # Filter cols that conflict with truth values.
@@ -72,17 +92,11 @@ while True:
       distincts = list(set(cand[r] for cand in wc))
       if len(distincts) == 1 and distincts[0] is not None:
         truth_values[r][c] = distincts[0]
+    if truth_values != intermediate_truth:
+      intermediate_truth = copy.deepcopy(truth_values)
+      Print(truth_values)
+      time.sleep(.18)
+
   if truth_values == old_truth:
     break
-  for r in range(len(rows)):
-    for c in range(len(columns)):
-      if truth_values[r][c] == True:
-        print('██', end='')
-      elif truth_values[r][c] == None:
-        print('▒▒', end='')
-      else:
-        print('  ', end='')
-    print()
-  print('⎯⎯' * len(columns))
 
-  time.sleep(1)
