@@ -105,6 +105,7 @@ answer = s.check()
 if answer != z3.sat:
   print(answer)
   sys.exit(0)
+
 m = s.model()
 for r in range(len(rows)):
   for c in range(len(columns)):
