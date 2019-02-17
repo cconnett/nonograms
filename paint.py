@@ -10,8 +10,6 @@ for line in sys.stdin:
   rows.append(tuple(int(v) for v in line.split()))
 for line in sys.stdin:
   columns.append(tuple(int(v) for v in line.split()))
-print(rows)
-print(columns)
 
 def Legals(clues, offset, length):
   minimum = sum(clues) + len(clues) - 1
@@ -32,14 +30,6 @@ def Expand(clues, configs, length):
       for offset in range(dist):
         r[block + offset] = True
     yield r
-
-
-try:
-  print(list(Expand(rows[0], Legals(rows[0], 0, 21), 21)))
-  # print(list(Legals(rows[0], 0, 21)))
-except:
-  import pdb
-  pdb.post_mortem()
 
 work_rows = [
     list(Expand(row_clues, Legals(row_clues, 0, len(rows)), len(rows)))
