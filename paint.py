@@ -51,6 +51,7 @@ while True:
         for cand in wr:
           if cand[c] != truth:
             wr.remove(cand)
+  # Find squares that have only a single possible truth value.
   for r, wr in enumerate(work_rows):
     for c in range(len(columns)):
       distincts = list(set(cand[c] for cand in wr))
@@ -65,13 +66,14 @@ while True:
         for cand in wc:
           if cand[r] != truth:
             wc.remove(cand)
-  if truth_values == old_truth:
-    break
+  # Find squares that have only a single possible truth value.
   for c, wc in enumerate(work_cols):
     for r in range(len(rows)):
       distincts = list(set(cand[r] for cand in wc))
       if len(distincts) == 1 and distincts[0] is not None:
         truth_values[r][c] = distincts[0]
+  if truth_values == old_truth:
+    break
   for r in range(len(rows)):
     for c in range(len(columns)):
       if truth_values[r][c] == True:
