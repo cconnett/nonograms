@@ -1,5 +1,6 @@
 import copy
 import sys
+import time
 
 rows = []
 columns = []
@@ -93,3 +94,5 @@ while True:
         print('  ', end='')
     print()
   print('⎯⎯' * len(columns))
+
+  time.sleep(1)
