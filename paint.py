@@ -1,56 +1,16 @@
 import sys
-
 import z3
 
-rows = [
-    (7, 1, 2, 7),
-    (1, 1, 3, 1, 1),
-    (1, 3, 1, 2, 2, 1, 3, 1),
-    (1, 3, 1, 1, 1, 1, 3, 1),
-    (1, 3, 1, 1, 1, 1, 3, 1),
-    (1, 1, 1, 1, 1),
-    (7, 1, 1, 1, 7),
-    (2, 2),
-    (3, 8, 2, 1),
-    (3, 1, 2, 2, 2, 1),
-    (1, 1, 1, 2, 1, 1, 1),
-    (1, 4, 2, 5, 1),
-    (1, 2, 1, 1, 1, 1, 2),
-    (1, 2, 1, 6),
-    (7, 1, 1, 2, 1, 1),
-    (1, 1, 2, 3, 2, 1),
-    (1, 3, 1, 1, 1, 2, 1, 2),
-    (1, 3, 1, 2, 1, 4),
-    (1, 3, 1, 3, 1, 3, 1),
-    (1, 1, 1, 1, 4, 2),
-    (7, 1, 1, 1, 1, 1, 1),
-]
-columns = [
-    (7, 4, 7),
-    (1, 1, 2, 1, 1),
-    (1, 3, 1, 2, 1, 1, 3, 1),
-    (1, 3, 1, 3, 1, 3, 1),
-    (1, 3, 1, 1, 1, 1, 3, 1),
-    (1, 1, 2, 2, 1, 1),
-    (7, 1, 1, 1, 7),
-    (2, 1),
-    (1, 4, 6, 3),
-    (4, 2, 1, 1, 2),
-    (1, 1, 1, 1, 1, 2, 4),
-    (4, 2, 4),
-    (1, 1, 4, 1, 1, 1, 1, 1),
-    (1, 4),
-    (7, 2, 2, 1, 2, 2),
-    (1, 1, 1, 1, 1, 1, 2),
-    (1, 3, 1, 2, 3, 4),
-    (1, 3, 1, 1, 3, 4),
-    (1, 3, 1, 6, 1, 1),
-    (1, 1, 1, 2, 1),
-    (7, 1, 1, 2, 1, 3),
-]
+rows = []
+columns = []
+for line in sys.stdin:
+  if 'c' in line:
+    break
+  rows.append(tuple(int(v) for v in line.split()))
+for line in sys.stdin:
+  columns.append(tuple(int(v) for v in line.split()))
 
 s = z3.Solver()
-
 grid = z3.Function('grid', z3.IntSort(), z3.IntSort(), z3.BoolSort())
 
 blocks_by_row = [list() for r in range(len(rows))]
@@ -145,13 +105,7 @@ answer = s.check()
 if answer != z3.sat:
   print(answer)
   sys.exit(0)
-
 m = s.model()
-
-# import pprint
-# pprint.pprint([[m.eval(b) for b in row] for row in blocks_by_row])
-# pprint.pprint([[m.eval(b) for b in column] for column in blocks_by_column])
-
 for r in range(len(rows)):
   for c in range(len(columns)):
     if m.eval(grid(r, c)):
