@@ -2,8 +2,6 @@ import sys
 
 import z3
 
-#rows = [(7,), (1, 1), (1, 3, 1), (1, 3, 1), (1, 3, 1), (1, 1), (7,)]
-#columns = [(7,), (1, 1), (1, 3, 1), (1, 3, 1), (1, 3, 1), (1, 1), (7,)]
 rows = [
     (7, 1, 2, 7),
     (1, 1, 3, 1, 1),
@@ -37,10 +35,10 @@ columns = [
     (7, 1, 1, 1, 7),
     (2, 1),
     (1, 4, 6, 3),
-    (4, 2, 1, 1, 2),  #
-    (1, 1, 1, 1, 1, 2, 4),  #
-    (4, 2, 4),  #
-    (1, 1, 4, 1, 1, 1, 1, 1),  #
+    (4, 2, 1, 1, 2),
+    (1, 1, 1, 1, 1, 2, 4),
+    (4, 2, 4),
+    (1, 1, 4, 1, 1, 1, 1, 1),
     (1, 4),
     (7, 2, 2, 1, 2, 2),
     (1, 1, 1, 1, 1, 1, 2),
@@ -150,15 +148,12 @@ if answer != z3.sat:
 
 m = s.model()
 
-import pprint
-pprint.pprint([[m.eval(b) for b in row] for row in blocks_by_row])
-#pprint.pprint([[m.eval(b) for b in column] for column in blocks_by_column])
+# import pprint
+# pprint.pprint([[m.eval(b) for b in row] for row in blocks_by_row])
+# pprint.pprint([[m.eval(b) for b in column] for column in blocks_by_column])
 
 for r in range(len(rows)):
   for c in range(len(columns)):
-    ## if any(m.eval(b) == c for b in blocks_by_row[r]):
-    ##   print('██', end='')
-    ##   # print('▒▒', end='')
     if m.eval(grid(r, c)):
       print('██', end='')
     else:
