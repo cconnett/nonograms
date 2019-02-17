@@ -1,6 +1,5 @@
+import copy
 import sys
-
-import z3
 
 #rows = [(7,), (1, 1), (1, 3, 1), (1, 3, 1), (1, 3, 1), (1, 1), (7,)]
 #columns = [(7,), (1, 1), (1, 3, 1), (1, 3, 1), (1, 3, 1), (1, 1), (7,)]
@@ -37,10 +36,10 @@ columns = [
     (7, 1, 1, 1, 7),
     (2, 1),
     (1, 4, 6, 3),
-    (4, 2, 1, 1, 2),  #
-    (1, 1, 1, 1, 1, 2, 4),  #
-    (4, 2, 4),  #
-    (1, 1, 4, 1, 1, 1, 1, 1),  #
+    (4, 2, 1, 1, 2),
+    (1, 1, 1, 1, 1, 2, 4),
+    (4, 2, 4),
+    (1, 1, 4, 1, 1, 1, 1, 1),
     (1, 4),
     (7, 2, 2, 1, 2, 2),
     (1, 1, 1, 1, 1, 1, 2),
@@ -51,116 +50,85 @@ columns = [
     (7, 1, 1, 2, 1, 3),
 ]
 
-s = z3.Solver()
 
-grid = z3.Function('grid', z3.IntSort(), z3.IntSort(), z3.BoolSort())
+def Legals(clues, offset, length):
+  minimum = sum(clues) + len(clues) - 1
+  if length - offset < minimum:
+    return
+  if not clues:
+    yield ()
+    return
+  for i in range(offset, length):
+    for element in Legals(clues[1:], i + clues[0] + 1, length):
+      yield (i,) + element
 
-blocks_by_row = [list() for r in range(len(rows))]
-for r, row in enumerate(rows):
-  if not row:
+
+def Expand(clues, configs, length):
+  for config in configs:
+    r = [False for _ in range(length)]
+    for block, dist in zip(config, clues):
+      for offset in range(dist):
+        r[block + offset] = True
+    yield r
+
+
+try:
+  print(list(Expand(rows[0], Legals(rows[0], 0, 21), 21)))
+  # print(list(Legals(rows[0], 0, 21)))
+except:
+  import pdb
+  pdb.post_mortem()
+
+work_rows = [
+    list(Expand(row_clues, Legals(row_clues, 0, len(rows)), len(rows)))
+    for row_clues in rows
+]
+work_cols = [
+    list(Expand(col_clues, Legals(col_clues, 0, len(columns)), len(columns)))
+    for col_clues in columns
+]
+
+truth_values = [[None] * len(columns) for _ in range(len(rows))]
+
+old_truth = None
+while True:
+  if truth_values == old_truth:
+    break
+  old_truth = copy.deepcopy(truth_values)
+  for r, wr in enumerate(work_rows):
+    # Filter rows that conflict with truth values.
+    for c in truth_values[r]:
+      if c is not None:
+        for cand in wr:
+          if cand[c] != truth_values[r][c]:
+            wr.remove(cand)
+  for r, wr in enumerate(work_rows):
     for c in range(len(columns)):
-      s.add(grid(r, c) == False)
-    continue
-  # Make the blocks.
-  for i, clue in enumerate(row):
-    block = z3.Int(f'{i} block of {clue} in row {r}')
-    block.clue = clue
-    blocks_by_row[r].append(block)
+      distincts = list(set(cand[c] for cand in wr))
+      if len(distincts) == 1 and distincts[0] is not None:
+        truth_values[r][c] = distincts[0]
 
-  first_block = blocks_by_row[r][0]
-  # First block is >= 0.
-  s.add(first_block >= 0)
-  # Squares before the first block are off.
-  for c in range(len(columns)):
-    s.add(z3.Implies(c < blocks_by_row[r][0], grid(r, c) == False))
+  for c, wc in enumerate(work_cols):
+    # Filter cols that conflict with truth values.
+    for r in range(len(rows)):
+      if r is not None:
+        for cand in wc:
+          if cand[r] != truth_values[r][c]:
+            wc.remove(cand)
+  for c, wc in enumerate(work_cols):
+    for r in range(len(rows)):
+      distincts = list(set(cand[r] for cand in wc))
+      if len(distincts) == 1 and distincts[0] is not None:
+        truth_values[r][c] = distincts[0]
 
-  last_block = blocks_by_row[r][-1]
-  # Last block doesn't run off the grid.
-  s.add(last_block <= len(columns) - last_block.clue)
-  # Squares after the last block are off.
-  for c in range(len(columns)):
-    s.add(z3.Implies(c >= last_block + last_block.clue, grid(r, c) == False))
-
-  # Tiles in the block are on.
-  for block in blocks_by_row[r]:
-    for offset in range(block.clue):
-      s.add(grid(r, block + offset))
-  # Set invariants between pairs of adjacent blocks.
-  for i in range(len(blocks_by_row[r]) - 1):
-    current_block = blocks_by_row[r][i]
-    next_block = blocks_by_row[r][i + 1]
-    # The next block is sufficiently far after the current block.
-    s.add(next_block > current_block + current_block.clue)
-    # Squares between the end of the current block and the start of the next
-    # block are off.
+  for r in range(len(rows)):
     for c in range(len(columns)):
-      s.add(
-          z3.Implies(
-              z3.And(c >= current_block + current_block.clue, c < next_block),
-              grid(r, c) == False))
-
-blocks_by_column = [list() for c in range(len(columns))]
-for c, column in enumerate(columns):
-  if not column:
-    for r in range(len(rows)):
-      s.add(grid(r, c) == False)
-    continue
-  # Make the blocks.
-  for i, clue in enumerate(column):
-    block = z3.Int(f'{i} block of {clue} in column {c}')
-    block.clue = clue
-    blocks_by_column[c].append(block)
-
-  first_block = blocks_by_column[c][0]
-  # First block is >= 0.
-  s.add(first_block >= 0)
-  # Squares before the first block are off.
-  for r in range(len(rows)):
-    s.add(z3.Implies(r < first_block, grid(r, c) == False))
-
-  last_block = blocks_by_column[c][-1]
-  # Last block doesn't run off the grid.
-  s.add(last_block <= len(rows) - last_block.clue)
-  # Squares after the last block are off.
-  for r in range(len(rows)):
-    s.add(z3.Implies(r >= last_block + last_block.clue, grid(r, c) == False))
-
-  # Tiles in the block are on.
-  for block in blocks_by_column[c]:
-    for offset in range(block.clue):
-      s.add(grid(block + offset, c))
-  # Set invariants between pairs of adjacent blocks.
-  for i in range(len(blocks_by_column[c]) - 1):
-    current_block = blocks_by_column[c][i]
-    next_block = blocks_by_column[c][i + 1]
-    # The next block is sufficiently far after the current block.
-    s.add(next_block > current_block + current_block.clue)
-    # Squares between the end of the current block and the start of the next
-    # block are off.
-    for r in range(len(rows)):
-      s.add(
-          z3.Implies(
-              z3.And(r >= current_block + current_block.clue, r < next_block),
-              grid(r, c) == False))
-
-answer = s.check()
-if answer != z3.sat:
-  print(answer)
-  sys.exit(0)
-
-m = s.model()
-
-import pprint
-pprint.pprint([[m.eval(b) for b in row] for row in blocks_by_row])
-#pprint.pprint([[m.eval(b) for b in column] for column in blocks_by_column])
-
-for r in range(len(rows)):
-  for c in range(len(columns)):
-    ## if any(m.eval(b) == c for b in blocks_by_row[r]):
-    ##   print('██', end='')
-    ##   # print('▒▒', end='')
-    if m.eval(grid(r, c)):
-      print('██', end='')
-    else:
-      print('  ', end='')
-  print()
+      if truth_values[r][c] == True:
+        print('██', end='')
+      elif truth_values[r][c] == None:
+        print('▒▒', end='')
+      else:
+        print('  ', end='')
+    print()
+  input()
+  print('⎯⎯' * len(columns))
