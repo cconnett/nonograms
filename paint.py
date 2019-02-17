@@ -32,7 +32,29 @@ for r, row in enumerate(rows):
     s.add(False == grid(r, block + clue))
     s.add(False == grid(r, block - 1))
   for i in range(len(blocks_by_row[r]) - 1):
-    s.add(blocks_by_row[r][i+1] > (blocks_by_row[r][i] + clue))
+    s.add(blocks_by_row[r][i + 1] > (blocks_by_row[r][i] + clue))
+
+blocks_by_col = [list() for r in range(len(columns))]
+for c, col in enumerate(columns):
+  if not col:
+    for r in range(len(rows)):
+      s.add(grid(r, c) == False)
+    continue
+  for i, clue in enumerate(col):
+    block = z3.Int(f'{i}th block of {clue} in column {c}')
+    blocks_by_col[c].append(block)
+    # Set the legal range for a block.
+    s.add(0 <= block)
+    s.add(block <= len(rows) - clue)
+    # Tiles in the block are on.
+    for offset in range(clue):
+      s.add(grid(block + offset, c))
+    # Before and after the block are off. Out-of-bounds isn't a problem.
+    s.add(False == grid(block + clue, c))
+    s.add(False == grid(block - 1, c))
+  # Enforce ordering of the blocks.
+  for i in range(len(blocks_by_col[c]) - 1):
+    s.add(blocks_by_col[c][i + 1] > (blocks_by_col[c][i] + clue))
 
 answer = s.check()
 if answer != z3.sat:
