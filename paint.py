@@ -41,11 +41,8 @@ work_cols = [
 ]
 
 truth_values = [[None] * len(columns) for _ in range(len(rows))]
-
 old_truth = None
 while True:
-  if truth_values == old_truth:
-    break
   old_truth = copy.deepcopy(truth_values)
   for r, wr in enumerate(work_rows):
     # Filter rows that conflict with truth values.
@@ -68,12 +65,13 @@ while True:
         for cand in wc:
           if cand[r] != truth:
             wc.remove(cand)
+  if truth_values == old_truth:
+    break
   for c, wc in enumerate(work_cols):
     for r in range(len(rows)):
       distincts = list(set(cand[r] for cand in wc))
       if len(distincts) == 1 and distincts[0] is not None:
         truth_values[r][c] = distincts[0]
-
   for r in range(len(rows)):
     for c in range(len(columns)):
       if truth_values[r][c] == True:
