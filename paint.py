@@ -68,9 +68,9 @@ print(b2)
 for r in range(len(rows)):
   for c in range(len(columns)):
     if any(m.eval(b) == c for b in blocks_by_row[r]):
-      print('▒', end='')
+      print('▒▒', end='')
     elif m.eval(grid(r, c)):
-      print('█', end='')
+      print('██', end='')
     else:
-      print(' ', end='')
+      print('  ', end='')
   print()
