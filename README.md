@@ -11,5 +11,5 @@ This repeats until there's no change in the truth values. This technique never m
 
 ## SMT solving
 
-This is using TNT to kill a fly. It uses the `z3` constraint solver to solve the entire puzzle. It encodes the entire puzzle in an SMT formula and
+This is using TNT to kill a fly. It uses the [z3 constraint solver](https://github.com/Z3Prover/z3) to solve the entire puzzle. It encodes the entire puzzle in an SMT formula and
 prints the result.
