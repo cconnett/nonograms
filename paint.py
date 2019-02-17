@@ -97,10 +97,10 @@ while True:
   old_truth = copy.deepcopy(truth_values)
   for r, wr in enumerate(work_rows):
     # Filter rows that conflict with truth values.
-    for c in truth_values[r]:
-      if c is not None:
+    for c, truth in enumerate(truth_values[r]):
+      if truth is not None:
         for cand in wr:
-          if cand[c] != truth_values[r][c]:
+          if cand[c] != truth:
             wr.remove(cand)
   for r, wr in enumerate(work_rows):
     for c in range(len(columns)):
@@ -111,9 +111,10 @@ while True:
   for c, wc in enumerate(work_cols):
     # Filter cols that conflict with truth values.
     for r in range(len(rows)):
-      if r is not None:
+      truth = truth_values[r][c]
+      if truth is not None:
         for cand in wc:
-          if cand[r] != truth_values[r][c]:
+          if cand[r] != truth:
             wc.remove(cand)
   for c, wc in enumerate(work_cols):
     for r in range(len(rows)):
@@ -130,5 +131,4 @@ while True:
       else:
         print('  ', end='')
     print()
-  input()
   print('⎯⎯' * len(columns))
