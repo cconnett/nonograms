@@ -1,4 +1,5 @@
 import copy
+import random
 import sys
 import time
 
@@ -36,6 +37,7 @@ def SolveIteratively(rows, columns):
       for col_clues in columns
   ]
 
+  truth_stack = []
   truth_values = [[None] * len(columns) for _ in range(len(rows))]
   while True:
     old_count = sum(map(len, work_cols)) + sum(map(len, work_rows))
@@ -53,6 +55,8 @@ def SolveIteratively(rows, columns):
       new_count = sum(map(len, work_cols)) + sum(map(len, work_rows))
     # Find squares that have only a single possible truth value.
     for r, wr in enumerate(work_rows):
+      if not wr:
+        break
       for c in range(len(columns)):
         seen = set()
         for cand in wr:
@@ -80,6 +84,8 @@ def SolveIteratively(rows, columns):
       new_count = sum(map(len, work_cols)) + sum(map(len, work_rows))
     # Find squares that have only a single possible truth value.
     for c, wc in enumerate(work_cols):
+      if not wc:
+        break
       for r in range(len(rows)):
         seen = set()
         for cand in wc:
@@ -95,9 +101,23 @@ def SolveIteratively(rows, columns):
         time.sleep(.18)
     new_count = sum(map(len, work_cols)) + sum(map(len, work_rows))
     if old_count == new_count and old_truth == truth_values:
-      if new_count > len(rows) + len(columns):
-        print("I'm stuck.")
-      break
+      if new_count == len(rows) + len(columns):
+        break
+      if any(len(work) == 0 for work in work_rows + work_cols):
+        # We messed up. Restore the previous savestate and guess again.
+        if not truth_stack:
+          print('No solution.')
+          break
+        _, truth_values, work_rows, work_cols = truth_stack.pop()
+      # Push the current state and make a guess.
+      while True:
+        r, worlds = random.choice(list(enumerate(work_rows)))
+        if len(worlds) > 1:
+          break
+      new_truth = random.choice(list(worlds))
+      c, val = random.choice(list(enumerate(new_truth)))
+      truth_stack.append(((r,c,val), copy.deepcopy(truth_values), copy.deepcopy(work_rows), copy.deepcopy(work_cols)))
+      truth_values[r][c] = val
     old_count = new_count
     old_truth = copy.deepcopy(truth_values)
 
