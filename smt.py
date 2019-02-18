@@ -112,4 +112,4 @@ def SolveWithConstraintSolver(rows, columns):
 
 
 if __name__ == '__main__':
-  SolveWithConstraintSolver(*common.ReadNono(sys.stdin))
+  SolveWithConstraintSolver(*common.ReadNono(open(sys.argv[1])))
